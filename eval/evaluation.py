@@ -11,6 +11,7 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 from sklearn.metrics.pairwise import cosine_similarity
 
 import nltk
+from evalManager import evalManager
 
 def create_list(file_name):
     result = list()
@@ -22,7 +23,7 @@ def create_list(file_name):
     return result
 
 
-def similar_sentence_score(test_input, test_output, corpus, output):
+def similar_sentence_score(test_input, test_output, corpus, output, soft_matching=False):
     # compare sentences without tags in original dataset and test dataset
     test_sentences = create_list(test_input)
     test_output_sentences = create_list(test_output)
@@ -52,6 +53,7 @@ def similar_sentence_score(test_input, test_output, corpus, output):
         # Look at the POS of insertion bigram
         test_output_tags = nltk.pos_tag(test_output_sentences[i].split())
         output_tags = nltk.pos_tag(output_sentences[max_j].split())
+        evaluator = evalManager(soft_matching=soft_matching)
 
         for i in range(0, len(output_tags) - 1, 1):
             bigram_match_count = 0
@@ -64,7 +66,6 @@ def similar_sentence_score(test_input, test_output, corpus, output):
 
                 # TODO: Add soft logic to check for insertion matches based on similar classes
 
-
                 # Insertions in first place
                 if (
                     "(" in output_tags_bigram[0][0]
@@ -73,7 +74,12 @@ def similar_sentence_score(test_input, test_output, corpus, output):
                     # Check if POS of other component same
                     if output_tags_bigram[1][1] == test_output_tags_bigram[1][1]:
                         # Check if insertion same
+                        '''
                         if output_tags_bigram[0][0] == test_output_tags_bigram[0][0]:
+                            bigram_match_count += 1
+                        '''
+                        if evaluator.match(output_tags_bigram[0][0], test_output_tags_bigram[0][0]):
+                            print("It's a match!")
                             bigram_match_count += 1
 
                 # Insertions in second place
@@ -84,14 +90,18 @@ def similar_sentence_score(test_input, test_output, corpus, output):
                     # Check if POS of other component same
                     if output_tags_bigram[0][1] == test_output_tags_bigram[0][1]:
                         # Check if insertion same
+                        '''
                         if output_tags_bigram[1][0] == test_output_tags_bigram[1][0]:
                             bigram_match_count += 1
+                        '''
+                        if evaluator.match(output_tags_bigram[1][0], test_output_tags_bigram[1][0]):
+                            print("It's a match!")
+                            bigram_match_count += 1
 
+            total_score += bigram_match_count
         # print(test_output_tags)
         # print(output_tags)
         # print(bigram_match_count/bigram_count)
-
-        total_score += bigram_match_count
 
     return total_score / len(test_sentences)
 
@@ -110,12 +120,11 @@ def generate_all_corpus_bigrams(output_sentences):
 
 def evaluate_against_corpus_bigrams(test_output_bigram, all_corpus_bigrams):
     total_score = 0
-    print(test_output_bigram)
+
     for sentence in all_corpus_bigrams:
         local_score = 0
         for corpus_bigram in sentence:
             # Check if the insertion is the same
-
             # First position
             if "(" in test_output_bigram[0][0] and "(" in corpus_bigram[0][0]:
                 # Check if POS is the same
@@ -178,8 +187,10 @@ if __name__ == "__main__":
     # Sentences with insertions
     output = "../data/output.txt"
 
-    sss = similar_sentence_score(test_input, test_output, corpus, output)
+    sss_hard = similar_sentence_score(test_input, test_output, corpus, output, soft_matching=False)
+    sss_soft = similar_sentence_score(test_input, test_output, corpus, output, soft_matching=True)
     sis = similar_insertion_score(test_output, output)
 
-    print("Similar sentence score on corpus:", sss)
+    print("Similar sentence(hard-matching) score on corpus:", sss_hard)
+    print("Similar sentence(soft-matching) score on corpus:", sss_soft)
     print("Similar insertion score on corpus:", sis)

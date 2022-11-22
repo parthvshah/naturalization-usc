@@ -8,13 +8,13 @@ So the corresponding TAGS I chose for the sample output from one file in the San
 
 (Information can be found in disfluency_key.json) 
 
- "Pause": {
+"Pause": {
         "...(N)": "(long)",
         "...": "(medium)",
         "..": "(short)",
         "(0)": "(latching)"
     },
-    "Vocal Noises": {
+"Vocal Noises": {
         "( )": "(vocal_noises)",
         "(H)": "(inhalation)",
         "(Hx)": "(exhalation)",
@@ -22,7 +22,7 @@ So the corresponding TAGS I chose for the sample output from one file in the San
         "@": "(laughter)"
     },
 
-    "Extra": {
+"Extra": {
     	"um": "(um)",
     	"umm": "(umm)",
     	"uh": "(uh)",
