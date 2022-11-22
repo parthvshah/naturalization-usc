@@ -1,0 +1,88 @@
+{
+    "Units": {
+        "RETURN": "(units_intonation_unit)",
+        "--": "(units_truncated_intonation_unit)",
+        "SPACE": "(units_word)",
+        "_": "(units_truncated_word)"
+    },
+    "Speakers": {
+        ":": "(speakers_speaker_identity_turn_start)",
+        "[ ]": "(speakers_speech_overlap)"
+    },
+    "Transitional Continuity": {
+        ".": "(transitional_continuity_final)",
+        ",": "(transitional_continuity_continuing)",
+        "?": "(transitional_continuity_appeal)"
+    },
+    "Terminal Pitch Direction": {
+        "\\": "(terminal_pitch_direction_fall)",
+        "/": "(terminal_pitch_direction_rise)",
+        "-": "(terminal_pitch_direction_level)"
+    },
+    "Accent and Lengthening": {
+        "^": "(accent_and_lengthening_primary_accent)",
+        "'": "(accent_and_lengthening_secondary_accent)",
+        "!": "(accent_and_lengthening_booster)",
+        "=": "(accent_and_lengthening_lengthening)"
+    },
+    "Tone": {
+        "\\": "(tone_fall)",
+        "/": "(tone_rise)",
+        "\\/": "(tone_fall_rise)",
+        "/\\": "(tone_rise_fall)",
+        "-": "(tone_level)"
+    },
+    "Pause": {
+        "...(N)": "(pause_long)",
+        "...": "(pause_medium)",
+        "..": "(pause_short)",
+        "(0)": "(pause_latching)"
+    },
+    "Vocal Noises": {
+        "( )": "(vocal_noises_vocal_noises)",
+        "(H)": "(vocal_noises_inhalation)",
+        "(Hx)": "(vocal_noises_exhalation)",
+        "%": "(vocal_noises_glottal_stop)",
+        "@": "(vocal_noises_laughter)"
+    },
+    "Quality": {
+        "<Y  Y>": "(quality_quality)",
+        "<@  @>": "(quality_laugh_quality)",
+        "<Q  Q>": "(quality_quotation_quality)",
+        "<Y  <Z  Z>  Y>": "(quality_multiple_quality_features)"
+    },
+    "Phonetics": {
+        "(/  /)": "(phonetics_phonetic_transcription)"
+    },
+    "Transcriber's Perspective": {
+        "((  ))": "(transcriber's_perspective_researcher's_comments)",
+        "<X  X>": "(transcriber's_perspective_uncertain_hearing)",
+        "X": "(transcriber's_perspective_indecipherable_syllable)"
+    },
+    "Specialized notation": {
+        "(N)": "(specialized_notation_duration)",
+        "&": "(specialized_notation_intonation_unit_continued)",
+        "|": "(specialized_notation_intonation_subunit_boundary)",
+        "<| |>": "(specialized_notation_embedded_intonation_unit)"
+    },
+    "Reset": {
+        "< >": "(reset_false_start)",
+        "<L2 L2>": "(reset_codeswitching)"
+    },
+    "Non-transcription Lines": {
+        "$": "(non-transcription_lines_comment)",
+        "$G": "(non-transcription_lines_interlinear_gloss)"
+    },
+    "Reserved Symbols": {
+        ",": "(reserved_symbols_phonemic_orthographic)",
+        " = * # { }": "(reserved_symbols_morphosyntactic_coding)",
+        " \" ~ ;": "(reserved_symbols_user_definable)"
+    },
+    "Extra": {
+        "um": "(um)",
+        "umm": "(umm)",
+        "uh": "(uh)",
+        "uhh": "(uhh)",
+        "--": "(pause_medium)"
+    }
+}
