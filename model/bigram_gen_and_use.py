@@ -3,6 +3,8 @@ import random
 from collections import OrderedDict
 import numpy as np
 
+from model.utils import END_TOKEN, START_TOKEN, load_corpus, load_disfluencies
+
 
 def h_inc_dict(dict, k):
     if k in dict.keys():
@@ -173,7 +175,7 @@ def gen_bigrams(
         write_file.write(out_string + "\n")
 
 
-def process_birgrams():
+def process_bigrams():
     flat_disfluencies = load_disfluencies()
     proc_corpus = load_corpus()
     ct_total_bigrams, ct_total_nonbigrams, all_bigrams, non_bigrams = learn_bigrams(
@@ -186,4 +188,5 @@ def process_birgrams():
     gen_bigrams(selection_percent, all_bigrams, test_in_path, output_path)
 
 
-process_birgrams()
+if __name__ == "__main__":
+    process_bigrams()

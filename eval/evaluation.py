@@ -12,7 +12,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 import nltk
 
-
 def create_list(file_name):
     result = list()
     with open(file_name, "r") as f:
@@ -65,6 +64,7 @@ def similar_sentence_score(test_input, test_output, corpus, output):
 
                 # TODO: Add soft logic to check for insertion matches based on similar classes
 
+
                 # Insertions in first place
                 if (
                     "(" in output_tags_bigram[0][0]
@@ -110,21 +110,22 @@ def generate_all_corpus_bigrams(output_sentences):
 
 def evaluate_against_corpus_bigrams(test_output_bigram, all_corpus_bigrams):
     total_score = 0
+    print(test_output_bigram)
     for sentence in all_corpus_bigrams:
         local_score = 0
-        for courpus_bigram in sentence:
+        for corpus_bigram in sentence:
             # Check if the insertion is the same
 
             # First position
-            if "(" in test_output_bigram[0][0] and "(" in courpus_bigram[0][0]:
+            if "(" in test_output_bigram[0][0] and "(" in corpus_bigram[0][0]:
                 # Check if POS is the same
-                if test_output_bigram[1][1] == courpus_bigram[1][1]:
+                if test_output_bigram[1][1] == corpus_bigram[1][1]:
                     local_score += 1
 
             # Second position
-            if "(" in test_output_bigram[1][0] and "(" in courpus_bigram[1][0]:
+            if "(" in test_output_bigram[1][0] and "(" in corpus_bigram[1][0]:
                 # Check if POS is the same
-                if test_output_bigram[0][1] == courpus_bigram[0][1]:
+                if test_output_bigram[0][1] == corpus_bigram[0][1]:
                     local_score += 1
 
         if len(sentence) != 0:
@@ -164,7 +165,7 @@ def similar_insertion_score(test_output, output):
 
 
 if __name__ == "__main__":
-
+    nltk.download('averaged_perceptron_tagger')
     # Test input
     test_input = "../data/test_input.txt"
     # Model output

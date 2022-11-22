@@ -1,2 +1,2 @@
 # naturalization-usc
-Repository for CSCI344's project; the naturalization of text
+Repository for CSCI544's project; the naturalization of text
