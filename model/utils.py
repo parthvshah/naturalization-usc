@@ -26,12 +26,13 @@ def load_corpus(c_path="./data/output.txt"):
     return proc_corpus
 
 
-def save_model(model, path="model.pt"):
-    with open(path, "wb") as file:
-        pickle.dump(model, file)
+def save_model(model, seq_len, path='model.pt'):
+    with open(path, 'wb') as file:
+        model_dict = {"seq_len": seq_len, "model": model}
+        pickle.dump(model_dict, file)
 
 
-def load_model(path="model.pt", device="cpu"):
-    with open(path, "rb") as file:
-        model = pickle.load(file)
-        return model.to(device)
+def load_model(path='model.pt', device='cpu'):
+    with open(path, 'rb') as file:
+        model_dict = pickle.load(file)
+        return model_dict["model"].to(device), model_dict["seq_len"]
