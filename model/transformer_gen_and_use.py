@@ -1,12 +1,16 @@
 import json
+import os
 import random
 from collections import OrderedDict
+
+import nltk as nltk
 import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import GPT2TokenizerFast
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, AdamW
 
+from eval.evaluation import similar_sentence_score, similar_insertion_score
 from utils import (
     load_disfluencies,
     load_corpus,
@@ -14,12 +18,12 @@ from utils import (
     END_TOKEN,
     save_model,
     load_model,
-    PAD_TOKEN,
+    PAD_TOKEN, filter_raw,
 )
 
 EPOCHS = 50
 LR = 5e-3
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 
 def tokenize_and_pad_corpus(tokenizer, corpus, device, seq_len=None):
@@ -49,7 +53,25 @@ def tokenize_and_pad_sen(tokenizer, sentence, device, seq_len):
     return input_ids.to(torch.long)
 
 
-def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device):
+def evaluate(model, tokenizer, device, seq_len, flat_disfluencies):
+    test_file_unfiltered = "data/santa_barabara_data/sb_full_test_raw.txt"
+    test_file_in = "data/santa_barabara_data/sb_full_test_filtered.txt"
+    test_file_predictions = "data/santa_barabara_data/tmp_test_predictions.txt"
+
+    if os.path.exists(test_file_predictions):
+        os.remove(test_file_predictions)
+
+    filter_raw(test_file_unfiltered, test_file_in)
+
+    autoregressive_predict(model, tokenizer, test_file_in, test_file_predictions, device, seq_len, flat_disfluencies)
+
+    nltk.download('averaged_perceptron_tagger')
+    sis = similar_insertion_score(test_file_predictions, test_file_unfiltered)
+
+    print("Similar insertion score on corpus:", sis)
+
+
+def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disfluencies):
     optimizer = AdamW(model.parameters(), lr=LR)
 
     labels_corpus, seq_len = tokenize_and_pad_corpus(tokenizer, lbl_corpus, device)
@@ -63,11 +85,9 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device):
         for ids_idx in range(BATCH_SIZE, len(input_corpus), BATCH_SIZE):
             input_ids = input_corpus[ids_idx:ids_idx+BATCH_SIZE]
             labels = labels_corpus[ids_idx:ids_idx + BATCH_SIZE]
-            #Exec
 
-            #batch = {"input_ids":input_ids, "labels":labels}
-            #model.resize_token_embeddings(len(tokenizer))
-            mask = gen_mask(tokens, pos, device)
+            #Exec
+            mask = gen_mask(input_ids, input_ids.shape[-1], device)
             outputs = model(input_ids=input_ids, labels=labels, attention_mask=mask)
             loss = outputs.loss
             loss.backward()
@@ -79,6 +99,8 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device):
             progress_bar.set_postfix(loss=loss.item())
             progress_bar.update(1)
             epoch_loss += loss.item()
+            
+        evaluate(model, tokenizer, device, seq_len, flat_disfluencies)
         print(f"\nEpoch {epoch} average loss is: {epoch_loss/((len(input_corpus) / BATCH_SIZE))}")
         #progress_bar.display(msg=f"\tEpoch {epoch} average loss is: {epoch_loss/ ((len(input_corpus) / BATCH_SIZE))}")
 
@@ -111,7 +133,8 @@ def get_tokenizer(model, flat_disfluencies, model_id):
     return tokenizer
 
 def gen_mask(tokens, start_loc, device):
-    return torch.cat((torch.ones((start_loc+2)), torch.zeros((tokens.size(1)-(start_loc+2)))), dim=0).to(device)
+    idv_mask = torch.cat((torch.ones((start_loc)), torch.zeros((tokens.size(1)-(start_loc)))), dim=0).to(device)
+    return idv_mask.repeat((tokens.shape[0],1))
 
 def autoregressive_predict(model, tokenizer, test_in_path, output_path, device, seq_len, disfluencies):
     test_corpus = load_corpus(test_in_path)
@@ -147,10 +170,11 @@ def autoregressive_predict(model, tokenizer, test_in_path, output_path, device, 
         write_file.write(working_sentence)
 
 
-def process_transformer(train=True, load_path=None):
-    flat_disfluencies = load_disfluencies()
-    in_corpus = load_corpus(c_path="./data/train_input.txt")
-    lbl_corpus = load_corpus(c_path="./data/train_labels.txt")
+def process_transformer(train=True, load_path=None, dis_path=None, in_txt_path=None, in_lbl_path=None
+                        ):
+    flat_disfluencies = load_disfluencies(d_path=dis_path)
+    in_corpus = load_corpus(c_path=in_txt_path)
+    lbl_corpus = load_corpus(c_path=in_lbl_path)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model_id = "gpt2"
@@ -158,19 +182,32 @@ def process_transformer(train=True, load_path=None):
     if train:
         model = get_model(model_id, device)
         tokenizer = get_tokenizer(model, flat_disfluencies, model_id)
-        trained_model, seq_len = learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device)
+        trained_model, seq_len = learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disfluencies)
     else:
         trained_model, seq_len = load_model(load_path, device)
         tokenizer = get_tokenizer(trained_model, flat_disfluencies, model_id)
 
     test_in_path = "./data/test_input.txt"
-    output_path = "data/test_output_29.txt"
+    output_path = "../data/test_output_29.txt"
 
     autoregressive_predict(trained_model, tokenizer, test_in_path, output_path, device, seq_len, flat_disfluencies)
 
 
+if __name__ == "__main__":
+    dis_path = "data/santa_barabara_data/disfluency_key.json"
+    full_select = True
 
+    if full_select:
+        in_raw_path = "data/santa_barabara_data/sb_full_insertions_transcription.txt"
+        in_txt_path = "data/santa_barabara_data/filtered_full.txt"
+    else:
+        in_raw_path = "data/santa_barabara_data/sb_select_insertions_transcription.txt"
+        in_txt_path = "data/santa_barabara_data/filtered_select.txt"
 
+    in_lbl_path = in_raw_path
 
-process_transformer()
-#process_transformer(train=False, load_path='model_epoch_29.pt')
+    if not os.path.exists(in_txt_path):
+        filter_raw(in_raw_path, in_txt_path)
+
+    process_transformer(dis_path=dis_path, in_txt_path=in_txt_path, in_lbl_path=in_lbl_path)
+    #process_transformer(train=False, load_path='model_epoch_29.pt')
