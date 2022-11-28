@@ -194,8 +194,8 @@ def process_bigrams():
 
     save_model(model=all_bigrams, path="./bigram_model.pkl")
 
-    test_in_path = "./data/test_input.txt"
-    output_path = "./data/test_output.txt"
+    test_in_path = "../data/test_input.txt"
+    output_path = "../data/test_output.txt"
     selection_percent = 0.5
     gen_bigrams(selection_percent, all_bigrams, test_in_path, output_path)
 
@@ -221,6 +221,6 @@ def online_process(input_sentence, selection_percent=0.3, model_path="./bigram_m
 
 
 if __name__ == "__main__":
-    #process_bigrams()
+    process_bigrams()
     online_test = online_process("Look I think there's a dog over there")
     print(online_test)
