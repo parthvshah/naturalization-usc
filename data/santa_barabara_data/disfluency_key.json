@@ -83,6 +83,10 @@
         "umm": "(umm)",
         "uh": "(uh)",
         "uhh": "(uhh)",
-        "--": "(pause_medium)"
+        "--": "(pause_medium)",
+        "( )": "(TSK)",
+        "(Swallow)": "(SWALLOW)",
+        "(ClearThroat)": "(THROAT)",
+        "(Cough)": "(COUGH)"
     }
 }

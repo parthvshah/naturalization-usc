@@ -36,6 +36,9 @@ EXTRA_DISFLUENCIES = [
     ("Extra", "uh", "(uh)"),
     ("Extra", "uhh", "(uhh)"),
     ("Extra", "--", "(pause_medium)"),
+    ("Extra", "Swallow", "(SWALLOW)"),
+    ("Extra", "ClearThroat", "(THROAT)"),
+    ("Extra", "Cough", "(COUGH)")
 ]
 SELECTED_DISFLUENCIES = ["Pause", "Vocal Noises", "Extra"]
 translation_table = {}
@@ -154,6 +157,34 @@ def select_disfluencies(selection_list):
 
     return chosen_disfluencies
 
+def count_disfluencies():
+
+    count_dict = {}
+    for key,val in DISFLUENCY_DICT.items():
+        for inner_k, inner_v in val.items():
+            count_dict[inner_v] = 0
+
+
+    for filename in os.listdir(DIRECTORY):
+        if not filename.startswith("._"):  # Modified for working on Windows
+            f = os.path.join(DIRECTORY, filename)
+            if os.path.isfile(f):
+                transcript = open(f).readlines()
+                for line in transcript:
+                    if "$" not in line:  # Avoid lines that are comments
+                        try:
+                            field_information = line.split("\t")
+                            field_value = field_information[-1]
+                        except:
+                            print("Exception line occured on: " + line)
+                            continue
+
+                    for key, val in DISFLUENCY_DICT.items():
+                        for inner_k, inner_v in val.items():
+                            if inner_k in field_value:
+                                count_dict[inner_v] += 1
+
+    return count_dict
 
 if __name__ == "__main__":
     preprocess_disfluency_dict()  # Grabs list of disfluencies from parsing annotations.txt
