@@ -212,8 +212,8 @@ def map_to_speechtext(sentence, disfluencies):
     return final_string
 
 
-def online_process(input_sentence, selection_percent=0.3, model_path=""):
-    bigram_model = load_model(path="./bigram_model.pkl")
+def online_process(input_sentence, selection_percent=0.3, model_path="./bigram_model.pkl"):
+    bigram_model = load_model(path=model_path)
     bg_string = gen_bigrams(selection_percent, bigram_model, test_corpus_path=None, output_path=None, test_in_sen=input_sentence)
     disfluencies = load_disfluencies(d_path="../data/santa_barabara_data/disfluency_key.json", acceptable_dis=["Pause", "Extra"], return_dict=True)
     mapped_string = map_to_speechtext(sentence=bg_string, disfluencies=disfluencies)
