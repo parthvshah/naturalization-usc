@@ -3,7 +3,7 @@ import random
 from collections import OrderedDict
 import numpy as np
 
-from model.utils import END_TOKEN, START_TOKEN, load_corpus, load_disfluencies
+from model.utils import END_TOKEN, START_TOKEN, load_corpus, load_disfluencies, save_model, load_model
 
 
 def h_inc_dict(dict, k):
@@ -35,11 +35,11 @@ def learn_bigrams(raw_corpus, flat_disfluencies, proportionalize=True):
                 h_inc_dict(all_bigrams, bigram)
             else:
                 if first_w[0] == "(" and first_w[-1] == ")":
-                    raise Exception(
+                    print(#raise Exception(
                         f"Error! Found a bigram in the training corpus that was not acceptable. Error Bigram: {first_w}"
                     )
                 elif second_w[0] == "(" and second_w[-1] == ")":
-                    raise Exception(
+                    print(#raise Exception(
                         f"Error! Found a bigram in the training corpus that was not acceptable. Error Bigram: {second_w}"
                     )
 
@@ -86,14 +86,19 @@ def gen_bigrams(
     selection_percent,
     all_bigrams,
     test_corpus_path,
-    output_path,
+    output_path=None,
     token_strategy="random_between_possible",
     disf_strategy="random",
+    test_in_sen=None
 ):
-    test_corpus = load_corpus(test_corpus_path)
+    if test_corpus_path is None:
+        test_corpus = [test_in_sen]
+    else:
+        test_corpus = load_corpus(test_corpus_path)
     idx_by_first, idx_by_second = index_bigrams(all_bigrams)
 
-    write_file = open(output_path, "w+")
+    if output_path is not None:
+        write_file = open(output_path, "w+")
 
     for line in test_corpus:
         tokens = line.split()
@@ -172,15 +177,22 @@ def gen_bigrams(
                 )
 
         out_string = apply_disfluencies(tokens, d_locations, d_choices)
-        write_file.write(out_string + "\n")
+        if output_path is not None:
+            write_file.write(out_string + "\n")
 
+    if output_path is None:
+        return out_string
+    else:
+        write_file.close()
 
 def process_bigrams():
-    flat_disfluencies = load_disfluencies()
-    proc_corpus = load_corpus()
+    flat_disfluencies = load_disfluencies(d_path="../data/santa_barabara_data/disfluency_key.json", acceptable_dis=["Pause", "Extra"])
+    proc_corpus = load_corpus(c_path="../data/santa_barabara_data/sb_full_insertions_transcription.txt", clean_filters=None)
     ct_total_bigrams, ct_total_nonbigrams, all_bigrams, non_bigrams = learn_bigrams(
         proc_corpus, flat_disfluencies
     )
+
+    save_model(model=all_bigrams, path="./bigram_model.pkl")
 
     test_in_path = "./data/test_input.txt"
     output_path = "./data/test_output.txt"
@@ -188,5 +200,27 @@ def process_bigrams():
     gen_bigrams(selection_percent, all_bigrams, test_in_path, output_path)
 
 
+def map_to_speechtext(sentence, disfluencies):
+    invert_disfluencies = {v:k for k,v in disfluencies.items()}
+    out_words = []
+    for word in sentence.split():
+        if word in invert_disfluencies.keys():
+            out_words.append(invert_disfluencies[word])
+        else:
+            out_words.append(word)
+    final_string = " ".join(out_words)
+    return final_string
+
+
+def online_process(input_sentence, selection_percent=0.3, model_path=""):
+    bigram_model = load_model(path="./bigram_model.pkl")
+    bg_string = gen_bigrams(selection_percent, bigram_model, test_corpus_path=None, output_path=None, test_in_sen=input_sentence)
+    disfluencies = load_disfluencies(d_path="../data/santa_barabara_data/disfluency_key.json", acceptable_dis=["Pause", "Extra"], return_dict=True)
+    mapped_string = map_to_speechtext(sentence=bg_string, disfluencies=disfluencies)
+    return mapped_string
+
+
 if __name__ == "__main__":
-    process_bigrams()
+    #process_bigrams()
+    online_test = online_process("Look I think there's a dog over there")
+    print(online_test)

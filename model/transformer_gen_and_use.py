@@ -6,6 +6,7 @@ from collections import OrderedDict
 import nltk as nltk
 import numpy as np
 import torch
+from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 from transformers import GPT2TokenizerFast
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, AdamW
@@ -63,7 +64,7 @@ def evaluate(model, tokenizer, device, seq_len, flat_disfluencies):
 
     filter_raw(test_file_unfiltered, test_file_in)
 
-    autoregressive_predict(model, tokenizer, test_file_in, test_file_predictions, device, seq_len, flat_disfluencies)
+    autoregressive_predict(model, tokenizer, test_file_in, test_file_predictions, device, seq_len, flat_disfluencies, autoreg=False)
 
     nltk.download('averaged_perceptron_tagger')
     sis = similar_insertion_score(test_file_predictions, test_file_unfiltered)
@@ -76,6 +77,7 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disf
 
     labels_corpus, seq_len = tokenize_and_pad_corpus(tokenizer, lbl_corpus, device)
     input_corpus, _ = tokenize_and_pad_corpus(tokenizer, in_corpus, device, seq_len)
+    loss_fn = CrossEntropyLoss()
 
     for epoch in range(EPOCHS):
         progress_bar = tqdm(range(BATCH_SIZE, len(input_corpus), BATCH_SIZE), position=0, leave=True)
@@ -87,9 +89,10 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disf
             labels = labels_corpus[ids_idx:ids_idx + BATCH_SIZE]
 
             #Exec
-            mask = gen_mask(input_ids, input_ids.shape[-1], device)
+            mask = gen_mask(input_ids, input_ids.shape[-1], device, tokenizer.pad_token_id)
             outputs = model(input_ids=input_ids, labels=labels, attention_mask=mask)
             loss = outputs.loss
+            #loss = loss_fn(outputs.logits.transpose(-1,-2), labels)
             loss.backward()
             optimizer.step()
             # lr_scheduler.step()
@@ -132,11 +135,13 @@ def get_tokenizer(model, flat_disfluencies, model_id):
     model.resize_token_embeddings(len(tokenizer))
     return tokenizer
 
-def gen_mask(tokens, start_loc, device):
-    idv_mask = torch.cat((torch.ones((start_loc)), torch.zeros((tokens.size(1)-(start_loc)))), dim=0).to(device)
-    return idv_mask.repeat((tokens.shape[0],1))
+def gen_mask(tokens, start_loc, device, pad_token_id):
+    padded = []
+    for sentence in tokens:
+        padded.append((torch.tensor([1 if x != pad_token_id else 0 for x in sentence])).to(device))
+    return torch.stack(padded, dim=0)
 
-def autoregressive_predict(model, tokenizer, test_in_path, output_path, device, seq_len, disfluencies):
+def autoregressive_predict(model, tokenizer, test_in_path, output_path, device, seq_len, disfluencies, autoreg=True):
     test_corpus = load_corpus(test_in_path)
     write_file = open(output_path, "w+")
 
@@ -148,25 +153,34 @@ def autoregressive_predict(model, tokenizer, test_in_path, output_path, device, 
         working_sentence = []
 
 
-        for pos in range(len(split_line)-1):
-            last_word_so_far = split_line[pos]
-            #tokens = tokenize_and_pad(tokenizer, split_line[:pos+1], device)
-            mask = gen_mask(tokens, pos, device)
+        if autoreg:
+            for pos in range(len(split_line) - 1):
+                last_word_so_far = split_line[pos]
+                mask = gen_mask(tokens, pos, device, tokenizer.pad_token_id)
 
+                with torch.no_grad():
+                    outputs = model(input_ids=tokens, labels=tokens, attention_mask=mask)
+
+                    # TODO: filter for only probs of disfluency tokens
+                    out_words = torch.argmax(outputs.logits, dim=-1).tolist()[0]
+                    next_selected_token = tokenizer.decode(token_ids=out_words[pos + 1])
+                    if last_word_so_far not in tokenizer.all_special_tokens:
+                        working_sentence.append(last_word_so_far)
+                    if next_selected_token in disfluencies:
+                        working_sentence.append(next_selected_token)
+            working_sentence.append("\n")
+            working_sentence = " ".join(working_sentence)
+        else:
             with torch.no_grad():
+                mask = (torch.tensor([1 if x != tokenizer.pad_token_id else 0 for x in tokens.tolist()[0]])).unsqueeze(0).to(device)
                 outputs = model(input_ids=tokens, labels=tokens, attention_mask=mask)
 
                 # TODO: filter for only probs of disfluency tokens
                 out_words = torch.argmax(outputs.logits, dim=-1).tolist()[0]
-                next_selected_token = tokenizer.decode(token_ids=out_words[pos+1])
-                #next_selected_token = out_str.split()#[pos+1]
-                #next_selected_token = "TEST"
-                if last_word_so_far not in tokenizer.all_special_tokens:
-                    working_sentence.append(last_word_so_far)
-                if next_selected_token in disfluencies:
-                    working_sentence.append(next_selected_token)
-        working_sentence.append("\n")
-        working_sentence = " ".join(working_sentence)
+                out_words = [w for w in out_words if w != tokenizer.pad_token_id]
+                words = tokenizer.decode(token_ids=out_words)
+                working_sentence = words + "\n"
+
         write_file.write(working_sentence)
 
 
