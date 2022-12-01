@@ -95,8 +95,7 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                         if evaluator.match(output_tags_bigram[1][0], test_output_tags_bigram[1][0]):
                             bigram_match_count += 1
 
-            if bigram_count != 0:
-                total_score += bigram_match_count / bigram_count
+            total_score += bigram_match_count 
         # print(test_output_tags)
         # print(output_tags)
         # print(bigram_match_count/bigram_count)
@@ -138,8 +137,7 @@ def evaluate_against_corpus_bigrams(test_output_bigram, all_corpus_bigrams):
                 if test_output_bigram[0][1] == corpus_bigram[0][1]:
                     local_score += 1
 
-        if insertion_count != 0:
-            total_score += local_score / insertion_count
+        total_score += local_score
 
     return total_score / len(all_corpus_bigrams)
 
@@ -164,10 +162,7 @@ def similar_insertion_score(test_output, output):
             )
             sentence_score += local_score
 
-        if len(test_output_tags) != 0:
-            total_score += sentence_score / len(test_output_tags)
-        else:
-            total_score += sentence_score
+        total_score += sentence_score
 
     return total_score / len(test_output_sentences)
 
