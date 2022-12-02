@@ -22,7 +22,7 @@ from utils import (
     PAD_TOKEN, filter_raw,
 )
 
-EPOCHS = 50
+EPOCHS = 100
 LR = 5e-3
 BATCH_SIZE = 16
 
@@ -84,9 +84,12 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disf
         progress_bar.set_description(f"Epoch {epoch}")
         epoch_loss = 0
 
+        data_idx = 0
         for ids_idx in range(BATCH_SIZE, len(input_corpus), BATCH_SIZE):
             input_ids = input_corpus[ids_idx:ids_idx+BATCH_SIZE]
             labels = labels_corpus[ids_idx:ids_idx + BATCH_SIZE]
+
+            pos_tags = nltk.pos_tag(in_corpus[data_idx])
 
             #Exec
             mask = gen_mask(input_ids, input_ids.shape[-1], device, tokenizer.pad_token_id)
@@ -102,6 +105,7 @@ def learn_transformer(in_corpus, lbl_corpus, model, tokenizer, device, flat_disf
             progress_bar.set_postfix(loss=loss.item())
             progress_bar.update(1)
             epoch_loss += loss.item()
+            data_idx += 1
             
         evaluate(model, tokenizer, device, seq_len, flat_disfluencies)
         print(f"\nEpoch {epoch} average loss is: {epoch_loss/((len(input_corpus) / BATCH_SIZE))}")
