@@ -38,7 +38,7 @@ EXTRA_DISFLUENCIES = [
     ("Extra", "--", "(pause_medium)"),
     ("Extra", "Swallow", "(SWALLOW)"),
     ("Extra", "ClearThroat", "(THROAT)"),
-    ("Extra", "Cough", "(COUGH)")
+    ("Extra", "Cough", "(COUGH)"),
 ]
 SELECTED_DISFLUENCIES = ["Pause", "Vocal Noises", "Extra"]
 translation_table = {}
@@ -157,13 +157,13 @@ def select_disfluencies(selection_list):
 
     return chosen_disfluencies
 
+
 def count_disfluencies():
 
     count_dict = {}
-    for key,val in DISFLUENCY_DICT.items():
+    for key, val in DISFLUENCY_DICT.items():
         for inner_k, inner_v in val.items():
             count_dict[inner_v] = 0
-
 
     for filename in os.listdir(DIRECTORY):
         if not filename.startswith("._"):  # Modified for working on Windows
@@ -185,6 +185,7 @@ def count_disfluencies():
                                 count_dict[inner_v] += 1
 
     return count_dict
+
 
 if __name__ == "__main__":
     preprocess_disfluency_dict()  # Grabs list of disfluencies from parsing annotations.txt
@@ -221,9 +222,7 @@ if __name__ == "__main__":
                             result = result.replace("=", "").replace("YWN", "")
                             result = re.sub("[^A-Za-z()_']+", " ", result)
                             if "(" in result:
-                                output_string_select += (
-                                    result.strip() + "\n"
-                                )
+                                output_string_select += result.strip() + "\n"
                                 output_string_full += result.strip() + "\n"
                             else:
                                 output_string_full += result.strip() + "\n"

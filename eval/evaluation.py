@@ -13,6 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import nltk
 from evalManager import evalManager
 
+
 def create_list(file_name):
     result = list()
     with open(file_name, "r") as f:
@@ -23,7 +24,9 @@ def create_list(file_name):
     return result
 
 
-def similar_sentence_score(test_input, test_output, corpus, output, soft_matching=False):
+def similar_sentence_score(
+    test_input, test_output, corpus, output, soft_matching=False
+):
     # compare sentences without tags in original dataset and test dataset
     test_sentences = create_list(test_input)
     test_output_sentences = create_list(test_output)
@@ -72,11 +75,13 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                     # Check if POS of other component same
                     if output_tags_bigram[1][1] == test_output_tags_bigram[1][1]:
                         # Check if insertion same
-                        '''
+                        """
                         if output_tags_bigram[0][0] == test_output_tags_bigram[0][0]:
                             bigram_match_count += 1
-                        '''
-                        if evaluator.match(output_tags_bigram[0][0], test_output_tags_bigram[0][0]):
+                        """
+                        if evaluator.match(
+                            output_tags_bigram[0][0], test_output_tags_bigram[0][0]
+                        ):
                             bigram_match_count += 1
 
                 # Insertions in second place
@@ -88,14 +93,16 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                     # Check if POS of other component same
                     if output_tags_bigram[0][1] == test_output_tags_bigram[0][1]:
                         # Check if insertion same
-                        '''
+                        """
                         if output_tags_bigram[1][0] == test_output_tags_bigram[1][0]:
                             bigram_match_count += 1
-                        '''
-                        if evaluator.match(output_tags_bigram[1][0], test_output_tags_bigram[1][0]):
+                        """
+                        if evaluator.match(
+                            output_tags_bigram[1][0], test_output_tags_bigram[1][0]
+                        ):
                             bigram_match_count += 1
 
-            total_score += bigram_match_count 
+            total_score += bigram_match_count
         # print(test_output_tags)
         # print(output_tags)
         # print(bigram_match_count/bigram_count)
@@ -168,7 +175,7 @@ def similar_insertion_score(test_output, output):
 
 
 if __name__ == "__main__":
-    nltk.download('averaged_perceptron_tagger')
+    nltk.download("averaged_perceptron_tagger")
     # Test input
     test_input = "../data/test_input.txt"
     # Model output
@@ -181,8 +188,12 @@ if __name__ == "__main__":
     # Sentences with insertions
     output = "../data/output.txt"
 
-    sss_hard = similar_sentence_score(test_input, test_output, corpus, output, soft_matching=False)
-    sss_soft = similar_sentence_score(test_input, test_output, corpus, output, soft_matching=True)
+    sss_hard = similar_sentence_score(
+        test_input, test_output, corpus, output, soft_matching=False
+    )
+    sss_soft = similar_sentence_score(
+        test_input, test_output, corpus, output, soft_matching=True
+    )
     sis = similar_insertion_score(test_output, output)
 
     print("Similar sentence(hard-matching) score on corpus:", sss_hard)

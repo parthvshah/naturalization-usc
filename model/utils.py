@@ -10,7 +10,7 @@ PAD_TOKEN = "[PAD]"
 def load_disfluencies(
     d_path="./data/disfluency_key.json",
     acceptable_dis=["Pause", "Vocal Noises", "Extra"],
-    return_dict=False
+    return_dict=False,
 ):
     disfls = open(d_path, "r")
     data = json.load(disfls)
@@ -18,7 +18,7 @@ def load_disfluencies(
     if return_dict:
         flat_disfluencies = {}
         for d_k in acceptable_dis:
-            for k,v in data[d_k].items():
+            for k, v in data[d_k].items():
                 flat_disfluencies[k] = v
     else:
         flat_disfluencies = []
@@ -41,8 +41,8 @@ def load_corpus(c_path="./data/output.txt", clean_filters=["newlines"]):
     return clean_corpus
 
 
-def save_model(model, seq_len=None, path='model.pt'):
-    with open(path, 'wb') as file:
+def save_model(model, seq_len=None, path="model.pt"):
+    with open(path, "wb") as file:
         if seq_len is not None:
             model_dict = {"seq_len": seq_len, "model": model}
         else:
@@ -50,8 +50,8 @@ def save_model(model, seq_len=None, path='model.pt'):
         pickle.dump(model_dict, file)
 
 
-def load_model(path='model.pt', device='cpu'):
-    with open(path, 'rb') as file:
+def load_model(path="model.pt", device="cpu"):
+    with open(path, "rb") as file:
         model_dict = pickle.load(file)
         if "seq_len" in model_dict.keys():
             return model_dict["model"].to(device), model_dict["seq_len"]
@@ -62,7 +62,6 @@ def load_model(path='model.pt', device='cpu'):
 def filter_raw(raw_path, filtered_out_path):
     raw_file = open(raw_path, "r")
     write_file = open(filtered_out_path, "w+")
-
 
     for line in raw_file.readlines():
         tokens = line.split()

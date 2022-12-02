@@ -5,7 +5,14 @@ from collections import OrderedDict
 import nltk
 import numpy as np
 
-from model.utils import END_TOKEN, START_TOKEN, load_corpus, load_disfluencies, save_model, load_model
+from model.utils import (
+    END_TOKEN,
+    START_TOKEN,
+    load_corpus,
+    load_disfluencies,
+    save_model,
+    load_model,
+)
 
 
 def h_inc_dict(dict, k):
@@ -37,12 +44,14 @@ def learn_bigrams(raw_corpus, flat_disfluencies, proportionalize=True):
             second_w_pos = pos_tags[i + 1]
 
             bigram = tuple((first_w, second_w))
-            if (first_w in flat_disfluencies or second_w in flat_disfluencies) and not ():
+            if (
+                first_w in flat_disfluencies or second_w in flat_disfluencies
+            ) and not ():
                 ct_total_bigrams = ct_total_bigrams + 1
                 h_inc_dict(all_bigrams, bigram)
 
                 if first_w in flat_disfluencies:
-                    if second_w == START_TOKEN: #Should never be the case
+                    if second_w == START_TOKEN:  # Should never be the case
                         pos_bigram_tags = tuple((first_w, START_TOKEN))
                     elif second_w == END_TOKEN:
                         pos_bigram_tags = tuple((first_w, END_TOKEN))
@@ -51,7 +60,7 @@ def learn_bigrams(raw_corpus, flat_disfluencies, proportionalize=True):
                 elif second_w in flat_disfluencies:
                     if first_w == START_TOKEN:
                         pos_bigram_tags = tuple((START_TOKEN, second_w))
-                    elif first_w == END_TOKEN: #Should never be the case
+                    elif first_w == END_TOKEN:  # Should never be the case
                         pos_bigram_tags = tuple((END_TOKEN, second_w))
                     else:
                         pos_bigram_tags = tuple((first_w_pos[-1], second_w))
@@ -180,10 +189,11 @@ def gen_bigrams(
 
                 actionable_idxs.append(f_prob)
 
-
             idxs = list(range(len(actionable_idxs)))
             num_items_to_alter = int((selection_percent * len(actionable_idxs)) // 1)
-            indexes_to_update = random.choices(idxs, actionable_idxs, k=num_items_to_alter)
+            indexes_to_update = random.choices(
+                idxs, actionable_idxs, k=num_items_to_alter
+            )
             indexes_to_update = list(set(indexes_to_update))
         elif token_strategy == "pos_selection_next_and_prev":
 
@@ -224,7 +234,7 @@ def gen_bigrams(
                 possible_dis = OrderedDict()
                 if first_w in idx_by_first.keys():
                     temp = idx_by_first[first_w]
-                    #for k,v in temp.items()
+                    # for k,v in temp.items()
                     possible_dis.update(temp)
                 if idx + 1 < len(tokens) and second_w in idx_by_second.keys():
                     temp = idx_by_second[second_w]
@@ -236,7 +246,9 @@ def gen_bigrams(
                 ]
                 if len(norm_vals) > 0:
                     d_choice = list(possible_dis.keys())[
-                        np.random.choice(list(range(len(possible_dis.keys()))), p=norm_vals)
+                        np.random.choice(
+                            list(range(len(possible_dis.keys()))), p=norm_vals
+                        )
                     ]
 
                     if (
@@ -262,23 +274,40 @@ def gen_bigrams(
     else:
         write_file.close()
 
+
 def process_bigrams():
-    flat_disfluencies = load_disfluencies(d_path="../data/santa_barabara_data/disfluency_key.json", acceptable_dis=["Pause", "Extra"])
-    proc_corpus = load_corpus(c_path="../data/santa_barabara_data/sb_full_insertions_transcription.txt", clean_filters=None)
-    ct_total_bigrams, ct_total_nonbigrams, all_bigrams, non_bigrams, pos_bigrams = learn_bigrams(
-        proc_corpus, flat_disfluencies
+    flat_disfluencies = load_disfluencies(
+        d_path="../data/santa_barabara_data/disfluency_key.json",
+        acceptable_dis=["Pause", "Extra"],
     )
+    proc_corpus = load_corpus(
+        c_path="../data/santa_barabara_data/sb_full_insertions_transcription.txt",
+        clean_filters=None,
+    )
+    (
+        ct_total_bigrams,
+        ct_total_nonbigrams,
+        all_bigrams,
+        non_bigrams,
+        pos_bigrams,
+    ) = learn_bigrams(proc_corpus, flat_disfluencies)
 
     save_model(model=all_bigrams, path="./bigram_model.pkl", seq_len=pos_bigrams)
 
     test_in_path = "../data/test_input.txt"
     output_path = "../data/test_output_0.35_scaled_start.txt"
     selection_percent = 0.35
-    gen_bigrams(selection_percent, all_bigrams, test_in_path, pos_bigrams, output_path=output_path)
+    gen_bigrams(
+        selection_percent,
+        all_bigrams,
+        test_in_path,
+        pos_bigrams,
+        output_path=output_path,
+    )
 
 
 def map_to_speechtext(sentence, disfluencies):
-    invert_disfluencies = {v:k for k,v in disfluencies.items()}
+    invert_disfluencies = {v: k for k, v in disfluencies.items()}
     out_words = []
     for word in sentence.split():
         if word in invert_disfluencies.keys():
@@ -289,10 +318,22 @@ def map_to_speechtext(sentence, disfluencies):
     return final_string
 
 
-def online_process(input_sentence, selection_percent=0.3, model_path="./bigram_model.pkl"):
+def online_process(
+    input_sentence, selection_percent=0.3, model_path="./bigram_model.pkl"
+):
     bigram_model = load_model(path=model_path)
-    bg_string = gen_bigrams(selection_percent, bigram_model, test_corpus_path=None, output_path=None, test_in_sen=input_sentence)
-    disfluencies = load_disfluencies(d_path="../data/santa_barabara_data/disfluency_key.json", acceptable_dis=["Pause", "Extra"], return_dict=True)
+    bg_string = gen_bigrams(
+        selection_percent,
+        bigram_model,
+        test_corpus_path=None,
+        output_path=None,
+        test_in_sen=input_sentence,
+    )
+    disfluencies = load_disfluencies(
+        d_path="../data/santa_barabara_data/disfluency_key.json",
+        acceptable_dis=["Pause", "Extra"],
+        return_dict=True,
+    )
     mapped_string = map_to_speechtext(sentence=bg_string, disfluencies=disfluencies)
     return mapped_string
 

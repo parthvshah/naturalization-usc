@@ -2,12 +2,13 @@ import json
 
 key_path = "./evalKey.json"
 
+
 class evalManager:
     def __init__(self, soft_matching=False):
         self.key = dict()
         self.soft_matching = soft_matching
 
-        with open(key_path, 'r') as key_file:
+        with open(key_path, "r") as key_file:
             key_as_str = key_file.read()
 
         self.key = json.loads(key_as_str)
@@ -28,9 +29,9 @@ class evalManager:
         for g in self.key.keys():
             if embedding in self.key[g]:
                 return g
-        
+
         return "INVALID"
-    
+
 
 if __name__ == "__main__":
     manager = evalManager()
