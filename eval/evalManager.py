@@ -1,4 +1,3 @@
-import os
 import json
 
 key_path = "./evalKey.json"
@@ -14,18 +13,9 @@ class evalManager:
         self.key = json.loads(key_as_str)
 
     def match(self, left, right):
-        print()
-        print(left)
-        print(right)
-        print()
-
         if self.soft_matching:
             left_group = self.group(left)
             right_group = self.group(right)
-
-            print(left_group)
-            print(right_group)
-            print()
 
             return left_group == right_group
 
@@ -39,10 +29,8 @@ class evalManager:
             if embedding in self.key[g]:
                 return g
         
-        print("INVALID")
         return "INVALID"
     
 
 if __name__ == "__main__":
     manager = evalManager()
-    print(manager.key)

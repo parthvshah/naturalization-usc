@@ -60,17 +60,15 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
             bigram_count = 0
 
             for j in range(0, len(test_output_tags) - 1, 1):
-                bigram_count += 1
                 output_tags_bigram = (output_tags[i], output_tags[i + 1])
                 test_output_tags_bigram = (test_output_tags[j], test_output_tags[j + 1])
-
-                # TODO: Add soft logic to check for insertion matches based on similar classes
 
                 # Insertions in first place
                 if (
                     "(" in output_tags_bigram[0][0]
                     and "(" in test_output_tags_bigram[0][0]
                 ):
+                    bigram_count += 1
                     # Check if POS of other component same
                     if output_tags_bigram[1][1] == test_output_tags_bigram[1][1]:
                         # Check if insertion same
@@ -79,7 +77,6 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                             bigram_match_count += 1
                         '''
                         if evaluator.match(output_tags_bigram[0][0], test_output_tags_bigram[0][0]):
-                            print("It's a match!")
                             bigram_match_count += 1
 
                 # Insertions in second place
@@ -87,6 +84,7 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                     "(" in output_tags_bigram[1][0]
                     and "(" in test_output_tags_bigram[1][0]
                 ):
+                    bigram_count += 1
                     # Check if POS of other component same
                     if output_tags_bigram[0][1] == test_output_tags_bigram[0][1]:
                         # Check if insertion same
@@ -95,10 +93,9 @@ def similar_sentence_score(test_input, test_output, corpus, output, soft_matchin
                             bigram_match_count += 1
                         '''
                         if evaluator.match(output_tags_bigram[1][0], test_output_tags_bigram[1][0]):
-                            print("It's a match!")
                             bigram_match_count += 1
 
-            total_score += bigram_match_count
+            total_score += bigram_match_count 
         # print(test_output_tags)
         # print(output_tags)
         # print(bigram_match_count/bigram_count)
@@ -123,24 +120,24 @@ def evaluate_against_corpus_bigrams(test_output_bigram, all_corpus_bigrams):
 
     for sentence in all_corpus_bigrams:
         local_score = 0
+        insertion_count = 0
         for corpus_bigram in sentence:
             # Check if the insertion is the same
             # First position
             if "(" in test_output_bigram[0][0] and "(" in corpus_bigram[0][0]:
                 # Check if POS is the same
+                insertion_count += 1
                 if test_output_bigram[1][1] == corpus_bigram[1][1]:
                     local_score += 1
 
             # Second position
             if "(" in test_output_bigram[1][0] and "(" in corpus_bigram[1][0]:
                 # Check if POS is the same
+                insertion_count += 1
                 if test_output_bigram[0][1] == corpus_bigram[0][1]:
                     local_score += 1
 
-        if len(sentence) != 0:
-            total_score += local_score / len(sentence)
-        else:
-            total_score += local_score
+        total_score += local_score
 
     return total_score / len(all_corpus_bigrams)
 
@@ -165,10 +162,7 @@ def similar_insertion_score(test_output, output):
             )
             sentence_score += local_score
 
-        if len(test_output_tags) != 0:
-            total_score += sentence_score / len(test_output_tags)
-        else:
-            total_score += sentence_score
+        total_score += sentence_score
 
     return total_score / len(test_output_sentences)
 
